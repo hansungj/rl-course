@@ -1,6 +1,6 @@
 import gym
 import numpy as np
-
+import itertools 
 # Init environment
 # Lets use a smaller 3x3 custom map for faster computations
 custom_map3x3 = [
@@ -10,7 +10,12 @@ custom_map3x3 = [
 ]
 env = gym.make("FrozenLake-v0", desc=custom_map3x3)
 # TODO: Uncomment the following line to try the default map (4x4):
-#env = gym.make("FrozenLake-v0")
+# custom_map4x4 = [
+#     'SFHF',
+#     'FFFF',
+#     'FFFG',
+# ]
+# env = gym.make("FrozenLake-v01",desc=custom_map4x4)
 
 # Uncomment the following lines for even larger maps:
 #random_map = generate_random_map(size=5, p=0.8)
@@ -50,7 +55,12 @@ def value_policy(policy):
     P = trans_matrix_for_policy(policy)
     # TODO: calculate and return v
     # (P, r and gamma already given)
-    return None
+    # (I -  gamma*P)v = r  
+
+
+    P = trans_matrix_for_policy(policy)
+    v = np.linalg.inv(np.identity(n_states) - gamma*P)@r
+    return v
 
 
 def bruteforce_policies():
@@ -61,6 +71,29 @@ def bruteforce_policies():
     optimalvalue = np.zeros(n_states)
     
     # TODO: implement code that tries all possible policies, calculate the values using def value_policy. Find the optimal values and the optimal policies to answer the exercise questions.
+    all_possible_policies = itertools.product(range(n_actions), repeat=n_states- len(terms)) 
+ 
+    for policy_cd in all_possible_policies:
+
+        #add in terminals
+        j = 0
+        for i in range(len(policy)):
+            if i in terms:
+                continue
+            policy[i] = policy_cd[j] 
+            j+=1
+
+        value = value_policy(policy)
+
+        if (value >= optimalvalue).all():
+            if (value == optimalvalue).all():
+                optimalpolicies.append(list(policy))
+                continue
+
+            optimalvalue = value
+            optimalpolicies = [list(policy)]
+
+
 
     print ("Optimal value function:")
     print(optimalvalue)
