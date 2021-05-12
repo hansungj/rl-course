@@ -12,11 +12,11 @@ custom_map3x3 = [
     'FFF',
     'FHG',
 ]
-env = gym.make("FrozenLake-v0", desc=custom_map3x3)
+# env = gym.make("FrozenLake-v0", desc=custom_map3x3)
 
 # If you want to try larger maps you can do this using:
-# random_map = gym.envs.frozen_lake.generate_random_map(size=5, p=0.8)
-# env = gym.make("FrozenLake-v0", desc=random_map)
+random_map = gym.envs.frozen_lake.generate_random_map(size=10, p=0.8)
+env = gym.make("FrozenLake-v0", desc=random_map)
 
 
 # Init some useful variables:
@@ -45,7 +45,6 @@ def value_iteration():
                 prev_value = V_states[state]
 
                 for action in range(n_actions):
-                    
                     backup = 0
                     for p, n_state, reward, terminal in env.P[state][action]:
                         if not terminal:
