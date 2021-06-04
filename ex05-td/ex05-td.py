@@ -2,6 +2,8 @@ import gym
 import numpy as np
 from itertools import product
 import matplotlib.pyplot as plt
+import random
+from tqdm import tqdm
 
 
 def print_policy(Q, env):
@@ -85,42 +87,93 @@ def plot_Q(Q, env):
     plt.xticks([])
     plt.yticks([])
 
+def epsilon_greedy(A, eps):
+    u = random.random()
+    if u > eps:
+        return random.choice(np.flatnonzero(A == A.max()))
+    return np.random.randint(0,len(A)-1)
 
-def sarsa(env, alpha=0.1, gamma=0.9, epsilon=0.1, num_ep=int(1e4)):
+def sarsa(env, alpha=0.1, gamma=0.9, epsilon=0.1, num_ep=int(1e5)):
     Q = np.zeros((env.observation_space.n,  env.action_space.n))
 
+    episode_lengths = []
     # TODO: implement the sarsa algorithm
-
-    # This is some starting point performing random walks in the environment:
-    for i in range(num_ep):
-        s = env.reset()
-        done = False
+    for i in tqdm(range(num_ep)):
+        s=env.reset()
+        a = epsilon_greedy(Q[s,:], epsilon)
+        done=False
+        j=0
         while not done:
-            a = np.random.randint(env.action_space.n)
+            
             s_, r, done, _ = env.step(a)
-    return Q
+            a_ = epsilon_greedy(Q[s_,:], epsilon)
 
+            if not done:
+                r += gamma*Q[s_, a_]
 
-def qlearning(env, alpha=0.1, gamma=0.9, epsilon=0.1, num_ep=int(1e4)):
+            #sarsa
+            Q[s,a] = Q[s,a] + alpha*(r - Q[s,a])
+
+            # update to next 
+            a = a_
+            s = s_
+
+            j+=1 
+
+            
+        episode_lengths.append(j)
+
+    return Q, episode_lengths
+
+def qlearning(env, alpha=0.1, gamma=0.9, epsilon=0.1, num_ep=int(1e5)):
     Q = np.zeros((env.observation_space.n,  env.action_space.n))
     # TODO: implement the qlearning algorithm
+
+    for i in tqdm(range(num_ep)):
+        s=env.reset()
+        done=False
+        while not done:
+            a = epsilon_greedy(Q[s,:], epsilon)
+            s_, r, done, _ = env.step(a)
+
+            if not done:
+                r += gamma*np.argmax(Q[s_,:])
+
+            #q learing 
+            Q[s,a] = Q[s,a] + alpha*(r - Q[s,a])
+
+            # update to next 
+            s = s_
     return Q
 
 
-env=gym.make('FrozenLake-v0')
-#env=gym.make('FrozenLake-v0', is_slippery=False)
-#env=gym.make('FrozenLake-v0', map_name="8x8")
+if __name__ == '__main__':
+    #env=gym.make('FrozenLake-v0')
+    env=gym.make('FrozenLake-v0', is_slippery=False)
+    # env=gym.make('FrozenLake-v0', map_name="8x8")
 
-print("Running sarsa...")
-Q = sarsa(env)
-plot_V(Q, env)
-plot_Q(Q, env)
-print_policy(Q, env)
-plt.show()
+    print("current environment: ")
+    env.render()
+    print("")
 
-print("Running qlearning")
-Q = qlearning(env)
-plot_V(Q, env)
-plot_Q(Q, env)
-print_policy(Q, env)
-plt.show()
+    print("Running sarsa...")
+    # overall = np.zeros(int(1e4))
+    # for i in tqdm(range(100)):
+    #     Q, l = sarsa(env, num_ep = int(1e4))
+    #     overall += np.array(l)
+
+    # plt.plot(range(len(l)), overall/100)
+    # plt.show()
+
+    Q, l = sarsa(env, num_ep = int(1e4))    
+    plot_V(Q, env)
+    plot_Q(Q, env)
+    print_policy(Q, env)
+    plt.show()
+
+    print("Running qlearning")
+    Q = qlearning(env, num_ep = int(1e4))
+    plot_V(Q, env)
+    plot_Q(Q, env)
+    print_policy(Q, env)
+    plt.show()
