@@ -68,8 +68,8 @@ def value_iteration():
 
     print('Took {} steps'.format(steps))
     print('Final optimal value function is')
-    print(V_states)
-    return policy 
+    
+    return policy, V_states 
 
 def terminals():
     terms = []
